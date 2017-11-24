@@ -13,6 +13,8 @@ using Android.Content.PM;
 using System.Collections.Generic;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
+using System.Net;
+using Microsoft.WindowsAzure.Storage.Queue;
 
 namespace PhotoTaker.Droid
 {
@@ -20,6 +22,7 @@ namespace PhotoTaker.Droid
 	public class MainActivity : Activity
 	{
         ImageView _imageView;
+        TextView _message1;
 
         int count = 1;
 
@@ -38,6 +41,8 @@ namespace PhotoTaker.Droid
                 _imageView = FindViewById<ImageView>(Resource.Id.imageView1);
                 button.Click += TakeAPicture;
             }
+
+            _message1 = FindViewById<TextView>(Resource.Id.message1);
         }
 
         private void CreateDirectoryForPictures()
@@ -74,38 +79,56 @@ namespace PhotoTaker.Droid
             if (resultCode == Result.Canceled)
                 return;
 
+            _message1.Text = "Uploading...";
+
             // Make it available in the gallery
 
-            Intent mediaScanIntent = new Intent(Intent.ActionMediaScannerScanFile);
-            Android.Net.Uri contentUri = Android.Net.Uri.FromFile(App._file);
-            mediaScanIntent.SetData(contentUri);
-            SendBroadcast(mediaScanIntent);
-
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse("DefaultEndpointsProtocol=https;AccountName=;AccountKey=;EndpointSuffix=core.windows.net");
-            var fileName = App._file.Name;
-
-            var blobClient = storageAccount.CreateCloudBlobClient();
-            var container = blobClient.GetContainerReference("images1");
-
-            CloudBlockBlob blockBlob = container.GetBlockBlobReference(fileName);
-
-            // Create or overwrite the "myblob" blob with contents from a local file.
-            await blockBlob.UploadFromFileAsync(App._file.Path);
-
-            // Display in ImageView. We will resize the bitmap to fit the display.
-            // Loading the full sized image will consume to much memory
-            // and cause the application to crash.
-
-            int height = Resources.DisplayMetrics.HeightPixels;
-            int width = _imageView.Height;
-
-            // To preview the original image: App.bitmap = BitmapFactory.DecodeFile(App._file.Path); 
-            App.bitmap = App._file.Path.LoadAndResizeBitmap(width, height);
-
-            if (App.bitmap != null)
+            try
             {
-                _imageView.SetImageBitmap(App.bitmap);
-                App.bitmap = null;
+                Intent mediaScanIntent = new Intent(Intent.ActionMediaScannerScanFile);
+                Android.Net.Uri contentUri = Android.Net.Uri.FromFile(App._file);
+                mediaScanIntent.SetData(contentUri);
+                SendBroadcast(mediaScanIntent);
+
+                // TODO upload through Web API instead
+                //HttpWebRequest uploadRequrest = (HttpWebRequest)HttpWebRequest.Create("photosharing.azurewebsites.net/api/upload");
+
+                CloudStorageAccount storageAccount = CloudStorageAccount.Parse("DefaultEndpointsProtocol=https;AccountName=;AccountKey=;EndpointSuffix=core.windows.net");
+                var fileName = App._file.Name;
+
+                var blobClient = storageAccount.CreateCloudBlobClient();
+                var container = blobClient.GetContainerReference("images1");
+
+                CloudBlockBlob blockBlob = container.GetBlockBlobReference(fileName);
+
+                // Create or overwrite the "myblob" blob with contents from a local file.
+                await blockBlob.UploadFromFileAsync(App._file.Path);
+
+                CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
+                var tnQueue = queueClient.GetQueueReference("thumbnailqueue");
+                await tnQueue.AddMessageAsync(new CloudQueueMessage(blockBlob.StorageUri.PrimaryUri.AbsoluteUri));
+
+                // Display in ImageView. We will resize the bitmap to fit the display.
+                // Loading the full sized image will consume to much memory
+                // and cause the application to crash.
+
+                int height = Resources.DisplayMetrics.HeightPixels;
+                int width = _imageView.Height;
+
+                // To preview the original image: App.bitmap = BitmapFactory.DecodeFile(App._file.Path); 
+                App.bitmap = App._file.Path.LoadAndResizeBitmap(width, height);
+
+                if (App.bitmap != null)
+                {
+                    _imageView.SetImageBitmap(App.bitmap);
+                    App.bitmap = null;
+                }
+
+                _message1.Text = "Uploaded!";
+            }
+            catch (Exception ex)
+            {
+                _message1.Text = "Error: " + ex.Message;
             }
 
             // Dispose of the Java side bitmap.

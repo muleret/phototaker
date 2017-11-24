@@ -63,6 +63,9 @@ namespace PhotoTaker.Droid
 			// aapt resource value: 0x7f050001
 			public const int imageView1 = 2131034113;
 			
+			// aapt resource value: 0x7f050002
+			public const int message1 = 2131034114;
+			
 			// aapt resource value: 0x7f050000
 			public const int myButton = 2131034112;
 			
