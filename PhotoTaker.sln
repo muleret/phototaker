@@ -13,7 +13,10 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "PhotoTaker", "PhotoTaker\Ph
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		PhotoTaker\PhotoTaker\PhotoTaker.projitems*{2bf78c17-9e43-498a-823b-826f0976943d}*SharedItemsImports = 4
 		PhotoTaker\PhotoTaker\PhotoTaker.projitems*{2e1d4d50-52ef-4a66-ba82-02e3b483cde9}*SharedItemsImports = 13
+		PhotoTaker\PhotoTaker\PhotoTaker.projitems*{8b8a4dc3-44aa-4563-b2c2-65f318228117}*SharedItemsImports = 4
+		PhotoTaker\PhotoTaker\PhotoTaker.projitems*{d4e65902-5261-47c4-8a25-4010a572c4aa}*SharedItemsImports = 4
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
